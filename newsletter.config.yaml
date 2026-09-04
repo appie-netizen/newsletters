@@ -1,0 +1,39 @@
+# Active config. Edit freely. See newsletter.config.example.yaml for notes.
+
+publication: "Signal & Noise"
+tagline: "A plain-language briefing, one topic at a time."
+author: "Appie Heyane"
+
+# Set this AFTER GitHub Pages is live. Must end with a trailing slash.
+base_url: "https://EXAMPLE.github.io/newsletters/"
+
+theme:
+  font_stack: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+  max_width_px: 680
+  light:
+    bg: "#ffffff"
+    surface: "#f5f6f8"
+    text: "#1b1d21"
+    muted: "#5b6470"
+    accent: "#2f6feb"
+    border: "#e4e7eb"
+  dark:
+    bg: "#0f1115"
+    surface: "#171a21"
+    text: "#e8eaed"
+    muted: "#9aa3af"
+    accent: "#6ea8fe"
+    border: "#2a2f3a"
+
+links:
+  - label: "RSS"
+    href: "feed.xml"
+
+research:
+  recency_months: 6
+  model: ""
+
+illustration_style: >
+  Editorial vector illustration, flat geometric shapes, limited palette of
+  slate blue, warm grey and off-white, generous negative space, soft grain,
+  no text, no logos, no watermarks. 3:2 aspect ratio.

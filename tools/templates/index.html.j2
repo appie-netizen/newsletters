@@ -1,0 +1,20 @@
+{% extends "base.html.j2" %}
+{% block main %}
+{% if not issues %}
+<p class="empty">No issues published yet.</p>
+{% endif %}
+<ul class="issue-list">
+{% for issue in issues %}
+  {% set thumb = (issue.sections | selectattr('image') | map(attribute='image') | list | first) %}
+  <li class="issue-card">
+    <a class="issue-card-link" href="issues/{{ issue.slug }}.html">
+      {% if thumb %}<img class="thumb" src="{{ thumb }}" alt="" loading="lazy">{% endif %}
+      <span class="ic-meta">{{ issue.date | nicedate }} &middot; Issue {{ issue.number }}
+        {%- if issue.status != 'published' %} &middot; <span class="badge">draft</span>{% endif %}</span>
+      <span class="ic-title">{{ issue.title }}</span>
+      <span class="ic-dek">{{ issue.dek }}</span>
+    </a>
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

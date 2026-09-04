@@ -1,0 +1,45 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ issue.title }} &mdash; {{ config.publication }}{% endblock %}
+{% block head %}
+<meta name="description" content="{{ issue.dek }}">
+<meta property="og:title" content="{{ issue.title }}">
+<meta property="og:description" content="{{ issue.dek }}">
+<meta property="og:type" content="article">
+{% endblock %}
+{% block main %}
+<article class="issue">
+  <p class="issue-meta">Issue {{ issue.number }} &middot; {{ issue.date | nicedate }}
+    {%- if issue.status != 'published' %} &middot; <span class="badge">draft</span>{% endif %}</p>
+  <h1>{{ issue.title }}</h1>
+  <p class="dek">{{ issue.dek }}</p>
+
+  {% for s in issue.sections %}
+  <section class="issue-section">
+    {% if s.heading %}<h2>{{ s.heading }}</h2>{% endif %}
+    {% if s.image %}
+    <figure>
+      <img src="{{ rel }}{{ s.image }}" alt="{{ s.image_alt }}" loading="lazy">
+      {% if s.image_alt %}<figcaption>{{ s.image_alt }}</figcaption>{% endif %}
+    </figure>
+    {% endif %}
+    {{ s.body_html | safe }}
+  </section>
+  {% endfor %}
+
+  {% if issue.sources %}
+  <section class="sources">
+    <h2>Sources</h2>
+    <ol>
+      {% for src in issue.sources %}<li><a href="{{ src.url }}" rel="nofollow noopener">{{ src.title or src.url }}</a></li>{% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  {% if prev or next %}
+  <nav class="issue-nav">
+    <span>{% if prev %}<a href="{{ prev.slug }}.html">&larr; Issue {{ prev.number }}</a>{% endif %}</span>
+    <span>{% if next %}<a href="{{ next.slug }}.html">Issue {{ next.number }} &rarr;</a>{% endif %}</span>
+  </nav>
+  {% endif %}
+</article>
+{% endblock %}

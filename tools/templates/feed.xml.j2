@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>{{ config.publication }}</title>
+    <link>{{ config.base_url }}</link>
+    <description>{{ config.tagline }}</description>
+    <language>en</language>
+    {% if issues %}<lastBuildDate>{{ issues[0].date | rfc822 }}</lastBuildDate>{% endif %}
+    {% for issue in issues %}
+    <item>
+      <title>{{ issue.title }}</title>
+      <link>{{ config.base_url }}issues/{{ issue.slug }}.html</link>
+      <guid isPermaLink="true">{{ config.base_url }}issues/{{ issue.slug }}.html</guid>
+      <pubDate>{{ issue.date | rfc822 }}</pubDate>
+      <description>{{ issue.dek }}</description>
+    </item>
+    {% endfor %}
+  </channel>
+</rss>
