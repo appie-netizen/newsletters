@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="600" height="400" rx="12" fill="#f5f6f8"/>
+  <text x="40" y="58" font-size="21" font-weight="700" fill="#1b1d21">Morocco's startup funding, 2024</text>
+  <text x="40" y="84" font-size="14" fill="#5b6470">Venture capital raised by Moroccan startups</text>
+
+  <text x="40" y="168" font-size="62" font-weight="800" fill="#2f6feb">$95M</text>
+  <text x="250" y="152" font-size="17" fill="#1b1d21">across</text>
+  <text x="250" y="180" font-size="34" font-weight="800" fill="#1b1d21">40 deals</text>
+
+  <text x="40" y="236" font-size="14" fill="#5b6470">Of which, one round:</text>
+  <rect x="40" y="248" width="520" height="34" rx="6" fill="#e4e7eb"/>
+  <rect x="40" y="248" width="263" height="34" rx="6" fill="#2f6feb"/>
+  <text x="52" y="270" font-size="14" font-weight="700" fill="#ffffff">Nuitee - $48M Series A</text>
+  <text x="520" y="270" font-size="13" fill="#5b6470" text-anchor="end">largest ever by a Moroccan startup</text>
+
+  <line x1="40" y1="322" x2="560" y2="322" stroke="#e4e7eb" stroke-width="1"/>
+  <text x="40" y="352" font-size="14" fill="#1b1d21">Ranked ~6th in Africa for startup funding;</text>
+  <text x="40" y="374" font-size="14" fill="#1b1d21">briefly a top-4 market across MENA by mid-2025.</text>
+</svg>

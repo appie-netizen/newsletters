@@ -113,8 +113,11 @@ def slugify(text: str, *, max_len: int = 60) -> str:
 #
 # generate(provider, model, prompt, grounded=...) returns the reply text.
 
-# "-latest" aliases track the current model so they don't 404 when Google rotates.
-DEFAULT_GEMINI_MODEL = "gemini-flash-latest"
+# A concrete flash id (the "-latest" alias pool is prone to 503s). Override with
+# $GEMINI_MODEL if Google retires it. _GEMINI_TEXT_FALLBACKS are tried on a
+# persistent 503.
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+_GEMINI_TEXT_FALLBACKS = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3-flash-preview"]
 DEFAULT_GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image"
 
 
@@ -260,6 +263,8 @@ def _anthropic_generate(model: str, prompt: str, *, grounded: bool, max_tokens: 
 
 
 def _gemini_generate(model: str, prompt: str, *, grounded: bool, max_tokens: int) -> str:
+    import time
+
     from google.genai import types
 
     client = gemini_client()
@@ -268,15 +273,34 @@ def _gemini_generate(model: str, prompt: str, *, grounded: bool, max_tokens: int
     cfg_kwargs = {"max_output_tokens": max(max_tokens, 32000)}
     if grounded:
         cfg_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
-    resp = client.models.generate_content(
-        model=model, contents=prompt,
-        config=types.GenerateContentConfig(**cfg_kwargs),
-    )
-    text = getattr(resp, "text", None)
-    if not text:
-        reason = getattr(getattr(resp, "candidates", [None])[0], "finish_reason", "?")
-        raise RuntimeError(f"Gemini returned no text (finish_reason={reason})")
-    return text
+    config = types.GenerateContentConfig(**cfg_kwargs)
+
+    # Try the requested model, then fall back to other flash ids if it stays 503.
+    tried: list[str] = []
+    candidates = [model] + [m for m in _GEMINI_TEXT_FALLBACKS if m != model]
+    last = None
+    for cand in candidates:
+        tried.append(cand)
+        for attempt in range(3):
+            try:
+                resp = client.models.generate_content(model=cand, contents=prompt, config=config)
+            except Exception as e:  # noqa: BLE001 - back off on 503/overload
+                msg = str(e)
+                if any(s in msg for s in ("503", "UNAVAILABLE", "overloaded", "high demand")):
+                    last = e
+                    wait = 4 * (attempt + 1)
+                    sys.stderr.write(f"[gemini] {cand} busy; retry in {wait}s\n")
+                    time.sleep(wait)
+                    continue
+                raise
+            text = getattr(resp, "text", None)
+            if text:
+                if cand != model:
+                    sys.stderr.write(f"[gemini] used fallback model {cand}\n")
+                return text
+            reason = getattr(getattr(resp, "candidates", [None])[0], "finish_reason", "?")
+            raise RuntimeError(f"Gemini returned no text (finish_reason={reason})")
+    raise RuntimeError(f"Gemini unavailable after trying {tried}: {last}")
 
 
 def generate(provider: str, model: str, prompt: str, *,

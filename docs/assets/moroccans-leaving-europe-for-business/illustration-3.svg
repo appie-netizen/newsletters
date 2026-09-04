@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="600" height="400" rx="12" fill="#f5f6f8"/>
+  <text x="40" y="56" font-size="21" font-weight="700" fill="#1b1d21">A two-way street</text>
+  <text x="40" y="82" font-size="14" fill="#5b6470">The skilled return runs against a much larger outbound tide.</text>
+
+  <text x="40" y="150" font-size="46" font-weight="800" fill="#2f6feb">37.7%</text>
+  <text x="220" y="138" font-size="15" fill="#1b1d21">youth unemployment, ages 15-24</text>
+  <text x="220" y="158" font-size="13" fill="#5b6470">Q1 2025</text>
+
+  <text x="40" y="228" font-size="46" font-weight="800" fill="#2f6feb">55%</text>
+  <text x="220" y="216" font-size="15" fill="#1b1d21">of 18-29 year-olds want to emigrate</text>
+  <text x="220" y="236" font-size="13" fill="#5b6470">Arab Barometer, 2023-24</text>
+
+  <text x="40" y="306" font-size="46" font-weight="800" fill="#8a94a3">~25%</text>
+  <text x="220" y="294" font-size="15" fill="#1b1d21">of 1981-2009 emigrants ever returned</text>
+  <text x="220" y="314" font-size="13" fill="#5b6470">and mostly during European downturns</text>
+
+  <line x1="40" y1="344" x2="560" y2="344" stroke="#e4e7eb" stroke-width="1"/>
+  <text x="40" y="374" font-size="14" fill="#5b6470">Morocco is still a net exporter of labour - and a new importer of founders.</text>
+</svg>
