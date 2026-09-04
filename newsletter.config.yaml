@@ -30,6 +30,7 @@ links:
     href: "feed.xml"
 
 research:
+  provider: ""
   recency_months: 6
   model: ""
 

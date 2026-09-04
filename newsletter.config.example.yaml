@@ -35,10 +35,11 @@ links:
   - label: "RSS"
     href: "feed.xml"
 
-# --- Research ---------------------------------------------------------
+# --- Research + drafting ------------------------------------------------
 research:
+  provider: ""           # "" (autodetect from keys) | "gemini" | "anthropic"
   recency_months: 6      # prefer sources newer than this
-  model: ""              # blank -> $NEWSLETTER_MODEL, else the built-in default
+  model: ""              # blank -> per-provider default (gemini-2.5-flash / claude-opus-5)
 
 # --- Illustrations --------------------------------------------------------
 # Appended to every image brief so all issues share one visual language.

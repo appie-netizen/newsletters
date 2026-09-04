@@ -63,7 +63,8 @@ def tmp_path(name: str) -> Path:
 
 
 def read_json(path: str | Path):
-    with open(path, "r", encoding="utf-8") as f:
+    # utf-8-sig tolerates a BOM (some Windows editors add one).
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
@@ -103,13 +104,58 @@ def slugify(text: str, *, max_len: int = 60) -> str:
     return text[:max_len].strip("-") or "issue"
 
 
-# --- Claude API ------------------------------------------------------------
+# --- LLM providers -------------------------------------------------------
+#
+# Two backends, same job:
+#   anthropic -> claude-* models, web_search server tool  (needs ANTHROPIC_API_KEY)
+#   gemini    -> gemini-* models, google_search grounding (needs GEMINI_API_KEY,
+#               free at https://aistudio.google.com)
+#
+# generate(provider, model, prompt, grounded=...) returns the reply text.
+
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
+
+
+def resolve_provider(cli_value: str | None = None, cfg: dict | None = None) -> str:
+    """Pick the LLM backend: --provider flag > $NEWSLETTER_PROVIDER > config
+    research.provider > autodetect from which API key is set > 'anthropic'.
+    """
+    load_env()
+    val = (
+        cli_value
+        or env("NEWSLETTER_PROVIDER")
+        or (cfg or {}).get("research", {}).get("provider")
+    )
+    if val:
+        val = str(val).lower()
+        if val not in ("anthropic", "gemini"):
+            sys.stderr.write(f"Unknown provider: {val!r} (use 'anthropic' or 'gemini')\n")
+            sys.exit(1)
+        return val
+    if os.getenv("GEMINI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"):
+        return "gemini"
+    if os.getenv("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    sys.stderr.write(
+        "No LLM credentials found. Set GEMINI_API_KEY (free: https://aistudio.google.com) "
+        "or ANTHROPIC_API_KEY in .env.\n"
+    )
+    sys.exit(1)
+
+
+def model_id(provider: str, cfg: dict | None = None, override: str | None = None) -> str:
+    """Which model to use for the given provider."""
+    if override:
+        return override
+    cfg_model = (cfg or {}).get("research", {}).get("model")
+    if provider == "gemini":
+        return env("GEMINI_MODEL") or cfg_model or DEFAULT_GEMINI_MODEL
+    return env("NEWSLETTER_MODEL") or cfg_model or DEFAULT_MODEL
+
 
 def anthropic_client():
-    """Return a configured anthropic.Anthropic client.
-
-    Reads ANTHROPIC_API_KEY from .env (or any credential source the SDK supports).
-    """
+    """Return a configured anthropic.Anthropic client."""
     load_env()
     try:
         import anthropic
@@ -117,22 +163,27 @@ def anthropic_client():
         sys.stderr.write("anthropic not installed. Run: pip install -r requirements.txt\n")
         raise
     if not os.getenv("ANTHROPIC_API_KEY"):
-        sys.stderr.write(
-            "ANTHROPIC_API_KEY is not set. Add it to .env (see .env.example).\n"
-        )
+        sys.stderr.write("ANTHROPIC_API_KEY is not set. Add it to .env.\n")
         sys.exit(1)
     return anthropic.Anthropic()
 
 
-def model_id(cfg: dict | None = None) -> str:
-    """Which model to use: --model flag handling is left to callers; this checks
-    the config's research.model, then $NEWSLETTER_MODEL, then the built-in default.
-    """
-    if cfg:
-        m = (cfg.get("research") or {}).get("model")
-        if m:
-            return str(m)
-    return env("NEWSLETTER_MODEL") or DEFAULT_MODEL
+def gemini_client():
+    """Return a configured google.genai Client (reads GEMINI_API_KEY)."""
+    load_env()
+    try:
+        from google import genai
+    except ImportError:
+        sys.stderr.write("google-genai not installed. Run: pip install -r requirements.txt\n")
+        raise
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        sys.stderr.write(
+            "GEMINI_API_KEY is not set. Get a free key at https://aistudio.google.com "
+            "and add it to .env.\n"
+        )
+        sys.exit(1)
+    return genai.Client(api_key=key)
 
 
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", re.DOTALL)
@@ -170,31 +221,69 @@ def extract_json(text: str):
     raise ValueError(f"No parseable JSON found in model reply:\n{text[:2000]}")
 
 
-def message_text(response) -> str:
-    """Join all text blocks of a Messages API response."""
+def _message_text(response) -> str:
     return "".join(b.text for b in response.content if getattr(b, "type", None) == "text")
 
 
-def run_messages(client, *, model: str, prompt: str, max_tokens: int = 16000,
-                 tools: list | None = None, system: str | None = None) -> str:
-    """messages.create with pause_turn handling. Returns joined text.
+ANTHROPIC_WEB_SEARCH = env("WEB_SEARCH_TOOL_TYPE") or "web_search_20260209"
+ANTHROPIC_WEB_SEARCH_FALLBACK = "web_search_20250305"
 
-    pause_turn happens on long server-tool (web search) turns; resume by
-    resending with the partial assistant content appended.
+
+def _anthropic_generate(model: str, prompt: str, *, grounded: bool, max_tokens: int) -> str:
+    client = anthropic_client()
+
+    def once(tool_type: str | None) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        kwargs = {"model": model, "max_tokens": max_tokens, "messages": messages}
+        if tool_type:
+            kwargs["tools"] = [{"type": tool_type, "name": "web_search", "max_uses": 8}]
+        for _ in range(10):
+            resp = client.messages.create(**kwargs)
+            if resp.stop_reason == "pause_turn":
+                messages.append({"role": "assistant", "content": resp.content})
+                continue
+            if resp.stop_reason == "refusal":
+                raise RuntimeError(f"Model refused: {getattr(resp, 'stop_details', None)}")
+            return _message_text(resp)
+        raise RuntimeError("too many pause_turn iterations")
+
+    if not grounded:
+        return once(None)
+    try:
+        return once(ANTHROPIC_WEB_SEARCH)
+    except Exception as e:  # noqa: BLE001 - retry once with the basic tool variant
+        if any(s in str(e).lower() for s in ("web_search", "tool", "400")):
+            sys.stderr.write(f"[anthropic] {ANTHROPIC_WEB_SEARCH} rejected ({e}); retrying basic\n")
+            return once(ANTHROPIC_WEB_SEARCH_FALLBACK)
+        raise
+
+
+def _gemini_generate(model: str, prompt: str, *, grounded: bool, max_tokens: int) -> str:
+    from google.genai import types
+
+    client = gemini_client()
+    # Gemini 2.5 spends part of the output budget on hidden "thinking"; give it
+    # generous headroom so the actual answer isn't truncated.
+    cfg_kwargs = {"max_output_tokens": max(max_tokens, 32000)}
+    if grounded:
+        cfg_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+    resp = client.models.generate_content(
+        model=model, contents=prompt,
+        config=types.GenerateContentConfig(**cfg_kwargs),
+    )
+    text = getattr(resp, "text", None)
+    if not text:
+        reason = getattr(getattr(resp, "candidates", [None])[0], "finish_reason", "?")
+        raise RuntimeError(f"Gemini returned no text (finish_reason={reason})")
+    return text
+
+
+def generate(provider: str, model: str, prompt: str, *,
+             grounded: bool = False, max_tokens: int = 16000) -> str:
+    """Run a prompt through the chosen backend; return the reply text.
+
+    grounded=True enables web search (Anthropic) / Google Search grounding (Gemini).
     """
-    messages = [{"role": "user", "content": prompt}]
-    kwargs = {"model": model, "max_tokens": max_tokens, "messages": messages}
-    if tools:
-        kwargs["tools"] = tools
-    if system:
-        kwargs["system"] = system
-    for _ in range(10):
-        response = client.messages.create(**kwargs)
-        if response.stop_reason == "pause_turn":
-            messages.append({"role": "assistant", "content": response.content})
-            continue
-        if response.stop_reason == "refusal":
-            details = getattr(response, "stop_details", None)
-            raise RuntimeError(f"Model refused the request: {details}")
-        return message_text(response)
-    raise RuntimeError("Too many pause_turn iterations without completion")
+    if provider == "gemini":
+        return _gemini_generate(model, prompt, grounded=grounded, max_tokens=max_tokens)
+    return _anthropic_generate(model, prompt, grounded=grounded, max_tokens=max_tokens)

@@ -19,10 +19,11 @@ Deterministic Python scripts. Each does one job: API calls, transforms, file/db 
 
 | Script | Purpose | Used by workflow |
 |--------|---------|------------------|
-| _common.py | shared helpers: env, config, slugify, Claude client, JSON extraction | (all) |
-| research_topic.py | Claude + web search → `.tmp/research_<slug>.json` | newsletter_automation |
+| _common.py | shared helpers: env, config, slugify, LLM dispatch (Gemini/Claude), JSON extraction | (all) |
+| research_topic.py | LLM + web search → `.tmp/research_<slug>.json` | newsletter_automation |
 | draft_newsletter.py | research JSON → `issues/<slug>.json` + image briefs | newsletter_automation |
-| download_assets.py | fetch generated images into `docs/assets/`, attach to issue | newsletter_automation |
+| generate_illustrations.py | Gemini image model → `docs/assets/`, attach to issue | newsletter_automation |
+| download_assets.py | import hand-made / MCP images from URLs or local paths, attach to issue | newsletter_automation |
 | build_site.py | render `docs/` (index, issue pages, feed.xml, CSS) from `issues/*.json` | newsletter_automation |
 | preview_site.py | serve `docs/` on localhost for review | newsletter_automation |
 | publish_site.py | mark issue published, rebuild, git commit + push | newsletter_automation |

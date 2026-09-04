@@ -18,12 +18,12 @@ from datetime import date
 
 from _common import (
     ISSUES_DIR,
-    anthropic_client,
     extract_json,
+    generate,
     load_config,
     model_id,
     read_json,
-    run_messages,
+    resolve_provider,
     slugify,
     write_json,
 )
@@ -65,8 +65,7 @@ single clear conceptual scene, no text in the image.
 "sources" array (dedupe, keep the most useful 5-10)."""
 
 
-def draft(research: dict, cfg: dict, number: int, model: str, with_images: bool) -> dict:
-    client = anthropic_client()
+def draft(research: dict, cfg: dict, number: int, provider: str, model: str, with_images: bool) -> dict:
     if with_images:
         image_rule = "illustration prompt for 2-3 of the sections, else null"
         image_alt_rule = "screen-reader description when image_brief is set, else null"
@@ -86,7 +85,7 @@ def draft(research: dict, cfg: dict, number: int, model: str, with_images: bool)
         image_alt_rule=image_alt_rule,
         image_count_rule=image_count_rule,
     )
-    text = run_messages(client, model=model, prompt=prompt, max_tokens=16000)
+    text = generate(provider, model, prompt, grounded=False, max_tokens=16000)
     return extract_json(text)
 
 
@@ -106,18 +105,20 @@ def main() -> int:
     ap.add_argument("--research", required=True, help="path to .tmp/research_<slug>.json")
     ap.add_argument("--slug", help="override the issue slug")
     ap.add_argument("--no-images", action="store_true", help="text-only issue; skip illustrations")
-    ap.add_argument("--model", help="override the Claude model id")
+    ap.add_argument("--provider", choices=["anthropic", "gemini"], help="force an LLM backend")
+    ap.add_argument("--model", help="override the model id")
     args = ap.parse_args()
 
     cfg = load_config()
     research = read_json(args.research)
     topic = research.get("topic") or "untitled"
     slug = args.slug or slugify(topic)
-    model = args.model or model_id(cfg)
+    provider = resolve_provider(args.provider, cfg)
+    model = model_id(provider, cfg, args.model)
     number = next_issue_number()
 
-    sys.stderr.write(f"[draft] issue {number} slug={slug} model={model} images={not args.no_images}\n")
-    content = draft(research, cfg, number, model, with_images=not args.no_images)
+    sys.stderr.write(f"[draft] issue {number} slug={slug} provider={provider} model={model} images={not args.no_images}\n")
+    content = draft(research, cfg, number, provider, model, with_images=not args.no_images)
 
     sections = []
     briefs = []

@@ -3,6 +3,9 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 
 # Newsletter automation
-anthropic>=0.40.0     # Claude API: research (web_search tool) + drafting
 Jinja2>=3.1.0         # static-site templating (build_site.py)
 PyYAML>=6.0           # newsletter.config.yaml
+
+# LLM backends — install at least one:
+google-genai>=1.0.0   # Gemini: research, drafting, illustrations (free tier)
+anthropic>=0.40.0     # Claude: research (web_search) + drafting
