@@ -1,18 +1,22 @@
 #!/usr/bin/env python
-"""Download generated illustrations into the site and attach them to the issue.
+"""Attach images to an issue: copy/download them into the site and wire them
+into issues/<slug>.json.
 
-The agent generates images (generate_image MCP) from the briefs printed by
-draft_newsletter.py, then passes the resulting URLs here IN THE SAME ORDER as
-the briefs. Local file paths are also accepted (they are copied).
+Sources can be URLs or local file paths (PNG / JPG / WEBP / SVG). Use this for
+hand-made infographics (SVG), Canva exports, or images from an MCP/tool.
 
 Usage:
+    # attach to the sections that already carry an image_brief, in order
+    python tools/download_assets.py --slug home-batteries --urls a.png b.png
+
+    # attach to explicit sections (e.g. SVGs on a --no-images draft), with alt text
     python tools/download_assets.py --slug home-batteries \\
-        --urls https://cdn.../a.png https://cdn.../b.png
+        --urls chart.svg map.svg --sections 1 3 \\
+        --alt "Bar chart of adoption by country" "Map of grid regions"
 
 Effect:
     writes docs/assets/<slug>/illustration-N.<ext>
-    sets sections[...]["image"] on issues/<slug>.json for each section that has
-    an image_brief, in order
+    sets sections[...]["image"] (and image_alt if --alt) on issues/<slug>.json
 """
 from __future__ import annotations
 
@@ -67,7 +71,13 @@ def fetch(src: str, dest_no_ext: Path) -> Path:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--slug", required=True)
-    ap.add_argument("--urls", nargs="+", required=True, help="image URLs or local paths, in brief order")
+    ap.add_argument("--urls", nargs="+", required=True, help="image URLs or local paths (PNG/JPG/SVG)")
+    ap.add_argument("--sections", nargs="+", type=int, metavar="IDX",
+                    help="section indices to attach to, paired with --urls in order "
+                         "(default: sections that have an image_brief)")
+    ap.add_argument("--alt", nargs="+", metavar="TEXT",
+                    help="alt text per image (sets image_alt); needed when the "
+                         "target section has no image_brief/image_alt yet")
     args = ap.parse_args()
 
     issue_path = ISSUES_DIR / f"{args.slug}.json"
@@ -76,24 +86,40 @@ def main() -> int:
         return 1
     issue = read_json(issue_path)
 
-    brief_idxs = [i for i, s in enumerate(issue["sections"]) if s.get("image_brief")]
-    if not brief_idxs:
-        sys.stderr.write("this issue has no sections with an image_brief; nothing to attach\n")
-        return 1
-    if len(args.urls) != len(brief_idxs):
+    if args.sections:
+        target_idxs = args.sections
+        n_sections = len(issue["sections"])
+        bad = [i for i in target_idxs if not 0 <= i < n_sections]
+        if bad:
+            sys.stderr.write(f"section index out of range (0..{n_sections - 1}): {bad}\n")
+            return 1
+    else:
+        target_idxs = [i for i, s in enumerate(issue["sections"]) if s.get("image_brief")]
+        if not target_idxs:
+            sys.stderr.write(
+                "no sections have an image_brief; pass --sections IDX [IDX ...] "
+                "(and --alt) to say where images go\n"
+            )
+            return 1
+    if len(args.urls) != len(target_idxs):
         sys.stderr.write(
-            f"warning: {len(args.urls)} images for {len(brief_idxs)} briefs; "
-            f"attaching the first {min(len(args.urls), len(brief_idxs))}\n"
+            f"warning: {len(args.urls)} images for {len(target_idxs)} target sections; "
+            f"attaching the first {min(len(args.urls), len(target_idxs))}\n"
         )
+    if args.alt and len(args.alt) != len(args.urls):
+        sys.stderr.write(f"--alt count ({len(args.alt)}) must match --urls count ({len(args.urls)})\n")
+        return 1
 
     asset_dir = DOCS_DIR / "assets" / args.slug
     asset_dir.mkdir(parents=True, exist_ok=True)
 
     attached = []
-    for n, (idx, src) in enumerate(zip(brief_idxs, args.urls), start=1):
+    for n, (idx, src) in enumerate(zip(target_idxs, args.urls), start=1):
         dest = fetch(src, asset_dir / f"illustration-{n}")
         rel = dest.relative_to(DOCS_DIR).as_posix()  # e.g. assets/<slug>/illustration-1.png
         issue["sections"][idx]["image"] = rel
+        if args.alt:
+            issue["sections"][idx]["image_alt"] = args.alt[n - 1]
         attached.append({"section_index": idx, "path": rel})
 
     write_json(issue_path, issue)

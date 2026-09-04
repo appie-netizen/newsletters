@@ -14,11 +14,16 @@ there is no email step. Run this whenever the user asks for "a newsletter about 
 
 ## LLM backend
 
-`research_topic.py` and `draft_newsletter.py` auto-pick a backend: **Gemini** if
-only `GEMINI_API_KEY` is set (free tier — the default here), **Anthropic** if
-`ANTHROPIC_API_KEY` is set. Force it with `--provider` or `NEWSLETTER_PROVIDER`.
-Illustrations use Gemini (`generate_illustrations.py`); a spent quota / no key
-falls back to hand-made art via `download_assets.py`.
+`draft_newsletter.py` auto-picks a backend: **Gemini** (`gemini-flash-latest`) if
+only `GEMINI_API_KEY` is set, **Anthropic** if `ANTHROPIC_API_KEY` is set. Force
+with `--provider` / `NEWSLETTER_PROVIDER`.
+
+**Free-tier reality (Gemini key without a billing account):** text drafting works;
+Google Search grounding and image generation return `429`. So on the free path:
+- **Research is done by the agent in-session** (its own web search), which then
+  writes `.tmp/research_<slug>.json` in the shape `research_topic.py` would.
+  `research_topic.py` is only for keys/backends that have grounded search.
+- **Infographics are SVGs authored by the agent** (see step 3).
 
 ## Tools Used
 
@@ -36,13 +41,22 @@ falls back to hand-made art via `download_assets.py`.
 
 ## Steps
 
-1. Derive `slug` from the topic. Run `research_topic.py`. If it exits non-zero,
-   the topic was too narrow/obscure — ask the user to reword or broaden it.
-2. Run `draft_newsletter.py` (add `--no-images` if the user wants a text-only issue).
-3. Illustrations (skip for `--no-images`):
-   - Default: `python tools/generate_illustrations.py --slug <slug>`.
-   - Or hand-made: user exports PNGs from Canva/etc., then
-     `python tools/download_assets.py --slug <slug> --urls <path1> <path2> ...`.
+1. Derive `slug` from the topic. Gather research:
+   - Free path: the agent web-searches the topic, then writes
+     `.tmp/research_<slug>.json` (keys: topic, summary, key_points[], stats[],
+     quotes[], sources[{title,url,published}]).
+   - Grounded backend available: `python tools/research_topic.py --topic "..."`.
+   If little material exists, ask the user to reword or broaden the topic.
+2. Run `draft_newsletter.py --research .tmp/research_<slug>.json` (add `--no-images`
+   for a text-only issue, or to hand-place SVGs in step 3).
+3. Infographics (skip for `--no-images` / text-only issues):
+   - **Free path (no billing): SVG.** Draft with `--no-images`, then the agent
+     authors 2-3 SVG infographics from the research data (stat callouts, simple
+     bar/line charts, concept diagrams) in the config's theme colors, and attaches
+     them: `python tools/download_assets.py --slug <slug> --urls a.svg b.svg
+     --sections 1 3 --alt "..." "..."`.
+   - Gemini images (needs Google billing): `python tools/generate_illustrations.py --slug <slug>`.
+   - Canva/other: export PNGs, then `download_assets.py ... --urls file1.png ...`.
 4. Run `build_site.py --drafts`.
 5. Run `preview_site.py --slug <slug>` (background it, then open / show the user
    `http://127.0.0.1:8000/issues/<slug>.html`). **Present the title + dek and wait
