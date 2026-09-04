@@ -113,8 +113,9 @@ def slugify(text: str, *, max_len: int = 60) -> str:
 #
 # generate(provider, model, prompt, grounded=...) returns the reply text.
 
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
-DEFAULT_GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
+# "-latest" aliases track the current model so they don't 404 when Google rotates.
+DEFAULT_GEMINI_MODEL = "gemini-flash-latest"
+DEFAULT_GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image"
 
 
 def resolve_provider(cli_value: str | None = None, cfg: dict | None = None) -> str:
