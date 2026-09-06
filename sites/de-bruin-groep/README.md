@@ -66,6 +66,20 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
 - Pinned `next` to `16.3.3` specifically — an earlier guess at `15.1.3` carried a
   known CVE (npm flagged 2 high + 1 critical on install); always check `npm install`
   output for vulnerability warnings before treating a fresh scaffold as done.
+- **Art-direction pass (commit `aec545a`).** Client benchmarked against
+  malverkeersservice.nl (holds up / we're ahead) and versluysverkeerstechniek.nl
+  (we were behind). Captured both with `capture_site.py` (`.tmp/audit_comp-mal`,
+  `.tmp/audit_comp-versluys`). Chosen direction: **industrieel/stoer**.
+  - Typography: dropped Quicksand + Open Sans for **Archivo** variable via
+    `next/font/google` with `axes: ['wdth']` (this DOES build under Next 16 /
+    next-font — no `weight` when you request an axis). Headings weight 800 at
+    `font-variation-settings: 'wdth' 122`, tight tracking. `@utility eyebrow`
+    (uppercase, wdth 110, 0.16em) + uppercase buttons = the industrial signal.
+  - Layout: full-bleed photo hero w/ gradient scrim + `clamp()` headline to
+    4.75rem; every home section a full-width band with its own ground for
+    chapter rhythm; `--shadow-card`/`--shadow-lift` tokens + hover-lift on
+    service cards; new full-orange `CtaBand` pre-footer; sticky translucent
+    header; `/certificaten` rebuilt as a 2-col card grid (was sparse rows).
 
 ## Key facts (from the audit, for reuse in the mockup/build)
 
