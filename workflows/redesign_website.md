@@ -309,4 +309,12 @@ every Must-fix has an observable pass.
   fails to load, the `wdth` setting is silently ignored (font stays normal
   width) — safe degradation, but screenshot to confirm you actually got the
   expanded stance.
+- **A carousel/slider only renders a couple of slides into the DOM at any
+  moment** (fotorama, slick, swiper — they lazy-mount frames). A one-shot
+  `capture_site.py` HTML dump of a logo/testimonial slider will undercount it,
+  sometimes badly (De Bruin's "6 partners" were actually 24 across 3 fotorama
+  carousels). When the client says "there are more", re-scrape: Playwright to
+  the section, let each carousel autoplay for ~30–45s, collect every unique
+  `img src` seen. Then render the full set as a marquee or grid, not the
+  partial capture.
 - (Add rate limits, SPA quirks, per-site gotchas here as you hit them.)
