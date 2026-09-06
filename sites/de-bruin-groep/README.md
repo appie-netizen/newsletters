@@ -53,9 +53,13 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
   `public/logo.png` (extracted from the live site, 1200×151). Favicon set via
   `app/icon.png`.
 - Image assets extracted from `.tmp/audit_de-bruin-groep/html/*.html` → downloaded
-  → optimised → placed under `public/{photos,partners,certificaten}/`. A subagent
-  vetted each: `logo-afbeelding1.png` on the live site is a *different* company —
-  not used. Certificate files are full Kiwa document scans (not badges), shown as
+  → optimised → placed under `public/{photos,partners,certificaten}/`. The live
+  "Onze relaties" block is 3 auto-rotating fotorama carousels of 2 logos each =
+  6 relations: Fronik, Griekspoor, R. Breure, AW Onderhoud, Van Voskuilen
+  Infratechniek, KEMP Schalkwijk (`afbeelding1-2.png` — a landscaping/loonwerk
+  firm; a real relation despite the generic filename). We show all 6 at once in
+  a static row (`public/partners/`), no motion.
+  Certificate files are full Kiwa document scans (not badges), shown as
   thumbnails on `/certificaten` that link to the full-size image. Some work photos
   carry visible licence plates / faint watermarks — acceptable, they're the
   client's own published imagery.
