@@ -55,6 +55,8 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
 - Image assets extracted from `.tmp/audit_de-bruin-groep/html/*.html` → downloaded
   → optimised → placed under `public/{photos,partners,certificaten}/`. The live
   "Onze relaties" = 3 auto-rotating fotorama carousels holding **24 logos total**
+  (25 in our marquee — client asked to add BGM Infra, logo rasterised from
+  bgminfra.nl's `logo_bgm_infra.svg`)
   (NOT 6 — the captured DOM only had the 2 loaded frames per carousel; re-scraped
   by watching the carousels cycle ~40s with Playwright, see
   `scratchpad/partners_all/`). All 24 placed under `public/partners/` (flattened
