@@ -54,11 +54,14 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
   `app/icon.png`.
 - Image assets extracted from `.tmp/audit_de-bruin-groep/html/*.html` → downloaded
   → optimised → placed under `public/{photos,partners,certificaten}/`. The live
-  "Onze relaties" block is 3 auto-rotating fotorama carousels of 2 logos each =
-  6 relations: Fronik, Griekspoor, R. Breure, AW Onderhoud, Van Voskuilen
-  Infratechniek, KEMP Schalkwijk (`afbeelding1-2.png` — a landscaping/loonwerk
-  firm; a real relation despite the generic filename). We show all 6 at once in
-  a static row (`public/partners/`), no motion.
+  "Onze relaties" = 3 auto-rotating fotorama carousels holding **24 logos total**
+  (NOT 6 — the captured DOM only had the 2 loaded frames per carousel; re-scraped
+  by watching the carousels cycle ~40s with Playwright, see
+  `scratchpad/partners_all/`). All 24 placed under `public/partners/` (flattened
+  onto white), rendered as a CSS marquee (`components/partners.tsx` +
+  `marquee-track` in globals.css; pauses on hover; reduced-motion stops it).
+  Lesson: a fotorama/slick/swiper carousel only puts a couple of slides in the
+  DOM — cycle it live to get the full set.
   Certificate files are full Kiwa document scans (not badges), shown as
   thumbnails on `/certificaten` that link to the full-size image. Some work photos
   carry visible licence plates / faint watermarks — acceptable, they're the
@@ -80,6 +83,12 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
     chapter rhythm; `--shadow-card`/`--shadow-lift` tokens + hover-lift on
     service cards; new full-orange `CtaBand` pre-footer; sticky translucent
     header; `/certificaten` rebuilt as a 2-col card grid (was sparse rows).
+- **Polish pass (commit `eef29f7`).** Client wanted the Versluys-level finish.
+  Added: staggered `rise-in` hero entrance (settles ~1s, off under
+  prefers-reduced-motion); `background-attachment: fixed` photo behind the
+  certifications band under an 82% scrim (parallax "image stays put"); the
+  24-logo relaties marquee. Logo cone glyph knocked fully **transparent**
+  (was black) so it needs no per-background variant.
 
 ## Key facts (from the audit, for reuse in the mockup/build)
 
