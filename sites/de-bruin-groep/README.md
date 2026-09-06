@@ -83,6 +83,15 @@ a cookie banner that overlaps content everywhere, and a mobile trust-bar that br
     chapter rhythm; `--shadow-card`/`--shadow-lift` tokens + hover-lift on
     service cards; new full-orange `CtaBand` pre-footer; sticky translucent
     header; `/certificaten` rebuilt as a 2-col card grid (was sparse rows).
+- **Typeface swap (commit `2158ede`).** Archivo felt characterless / off-brand
+  to the client. Now **Oswald** (condensed) for display + **Barlow** for body.
+  Oswald in caps = roadwork/traffic-signage register, right for this sector.
+  h1/h2 uppercase via globals; card titles are h3 (sentence case so "96b"
+  stays lowercase). Removed the `wdth`-axis / `display-x` expansion logic.
+- **Kiwa attribution (same commit).** The certs are Kiwa-issued but that only
+  showed inside the scans. Cropped the Kiwa mark from `iso.png` →
+  `public/kiwa.png`; "Afgegeven door [Kiwa]" credit on `/certificaten` hero
+  and the home certifications band.
 - **Polish pass (commit `eef29f7`).** Client wanted the Versluys-level finish.
   Added: staggered `rise-in` hero entrance (settles ~1s, off under
   prefers-reduced-motion); `background-attachment: fixed` photo behind the
