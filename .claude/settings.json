@@ -106,9 +106,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/redesign_gate_hook.sh\"",
             "timeout": 30,
-            "statusMessage": "Redesign gates SessionStart reminder"
+            "statusMessage": "Redesign gates SessionStart reminder",
+            "shell": "bash"
           }
         ]
       }
@@ -118,9 +119,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/redesign_gate_hook.sh\"",
             "timeout": 120,
-            "statusMessage": "Verifying redesign hard gates"
+            "statusMessage": "Verifying redesign hard gates",
+            "shell": "bash"
           }
         ]
       }
@@ -131,9 +133,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/redesign_gate_hook.sh\"",
             "timeout": 120,
-            "statusMessage": "Gate check before Bash (push guard)"
+            "statusMessage": "Gate check before Bash (push guard)",
+            "shell": "bash"
           }
         ]
       }
