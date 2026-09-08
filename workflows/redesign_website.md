@@ -23,6 +23,24 @@ Rubrics live in `workflows/redesign_website/`:
 `audit_a_brand_slop.md`, `audit_b_ui_principles.md`, `audit_c_ux_usability.md`,
 `redesign_brief_template.md`.
 
+## HARD GATES (mandatory)
+
+**Read and follow `workflows/redesign_website/GATES.md`.** Every redesign job
+is blocked from early exit / remote push until G0–G7 pass.
+
+- **Step 0:** write the client slug into `.claude/active_redesign_slug` (one line).
+- **After each phase:** update `sites/<slug>/gates.json` (or run verify with `--write-status`).
+- **Before a nested-repo remote push AND before declaring done:**
+
+```
+python tools/verify_redesign_gates.py --slug <slug>
+```
+
+  must exit **0**. The Claude Code **Stop** hook will block early exit while
+  the active slug file is present and any gate fails. Clear
+  `.claude/active_redesign_slug` only when verify passes.
+
+
 ## Inputs
 
 - `url` (required) — the site to audit, e.g. `https://acme-plumbing.com`
@@ -317,4 +335,26 @@ every Must-fix has an observable pass.
   the section, let each carousel autoplay for ~30–45s, collect every unique
   `img src` seen. Then render the full set as a marquee or grid, not the
   partial capture.
+- **Wix sites never reach `networkidle`** (persistent analytics / chat long-poll
+  connections) — `capture_site.py`'s `page.goto(..., wait_until="networkidle")`
+  just times out at 45s and the whole capture aborts with "could not load start
+  URL". Fixed in the tool (2026-09-07): `goto_resilient()` tries `networkidle`
+  first, then falls back to `domcontentloaded` + `load` + a 3.5s settle. Same
+  pattern will be needed for other builder platforms that keep sockets open
+  (Squarespace, sites with Intercom/Drift/Tidio).
+- **Git-Bash mangles bare-slash args**: `capture_site.py --pages / /menu /contact`
+  under Git-Bash on Windows turns `/` into `C:/Program Files/Git/` (MSYS path
+  conversion) and you silently capture the wrong URL. Pass full URLs
+  (`http://localhost:PORT/ .../menu`) or prefix the command with
+  `MSYS_NO_PATHCONV=1`.
+- **`next/font/google` `Archivo` with `axes: ['wdth']`** builds fine under Next
+  16 (no `weight` key alongside `axes`). Use `font-stretch: 112%` (or
+  `font-variation-settings: 'wdth' 110`) in CSS for the expanded signage stance;
+  `font-weight` 400–800 still works independently. Good "display face with a
+  point of view" that isn't a tired rounded sans.
+- **Lazy `<iframe>` maps look "broken" in a full-page Playwright screenshot** —
+  `loading="lazy"` + a map far down the page never enters the synthetic viewport
+  during `full_page=True`, so it screenshots blank. It's not a bug: scroll the
+  element into view (`el.scrollIntoView()`) and wait ~4s before shooting, or
+  check a page where the map sits near the top.
 - (Add rate limits, SPA quirks, per-site gotchas here as you hit them.)

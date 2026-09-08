@@ -11,7 +11,6 @@
       "WebSearch",
       "WebFetch",
       "Artifact",
-
       "Bash(python:*)",
       "Bash(python3:*)",
       "Bash(py:*)",
@@ -24,7 +23,6 @@
       "Bash(python -m playwright:*)",
       "Bash(python -m http.server:*)",
       "Bash(playwright:*)",
-
       "Bash(npm install)",
       "Bash(npm install:*)",
       "Bash(npm ci)",
@@ -38,7 +36,9 @@
       "Bash(npm run:*)",
       "Bash(npx --yes:*)",
       "Bash(node:*)",
-
+      "Bash(vercel:*)",
+      "Bash(npm i:*)",
+      "Bash(npm exec vercel:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
@@ -57,11 +57,9 @@
       "Bash(git config --get:*)",
       "Bash(git restore:*)",
       "Bash(git stash:*)",
-
       "Bash(gh:*)",
       "Bash(/c/Program Files/GitHub CLI/gh.exe:*)",
       "Bash(\"/c/Program Files/GitHub CLI/gh.exe\":*)",
-
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "Bash(curl http://localhost:*)",
@@ -70,11 +68,9 @@
       "Bash(curl -sI http://localhost:*)",
       "Bash(curl -s http://localhost:*)",
       "Bash(curl -s http://127.0.0.1:*)",
-
       "Bash(ffmpeg:*)",
       "Bash(*ffmpeg-win-x86_64*)",
       "Bash(*imageio_ffmpeg*)",
-
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(mv:*)",
@@ -102,6 +98,45 @@
       "Bash(git reset --hard:*)",
       "Bash(gh repo delete:*)",
       "Bash(gh auth logout:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "timeout": 30,
+            "statusMessage": "Redesign gates SessionStart reminder"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "timeout": 120,
+            "statusMessage": "Verifying redesign hard gates"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe\" \"${CLAUDE_PROJECT_DIR}/tools/redesign_gate_hook.py\"",
+            "timeout": 120,
+            "statusMessage": "Gate check before Bash (push guard)"
+          }
+        ]
+      }
     ]
   }
 }

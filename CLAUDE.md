@@ -25,6 +25,8 @@ You're working inside the **WAT framework** (Workflows, Agents, Tools). This arc
 
 ## How to Operate
 
+**Redesign jobs:** must respect workflows/redesign_website/GATES.md (set .claude/active_redesign_slug, stamp sites/<slug>/gates.json, and run python tools/verify_redesign_gates.py --slug <slug> to exit 0 before push / done).
+
 **1. Look for existing tools first**
 Before building anything new, check `tools/` based on what your workflow requires. Only create new scripts when nothing exists for that task.
 

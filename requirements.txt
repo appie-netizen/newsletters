@@ -9,3 +9,9 @@ PyYAML>=6.0           # newsletter.config.yaml
 # LLM backends — install at least one:
 google-genai>=1.0.0   # Gemini: research, drafting, illustrations (free tier)
 anthropic>=0.40.0     # Claude: research (web_search) + drafting
+
+# Website redesign / audit (redesign_website workflow)
+playwright>=1.44.0                  # capture_site.py — live-site screenshots + metrics
+#   after install, run once:  python -m playwright install chromium
+google-api-python-client>=2.130.0   # export_gdoc.py — push reports to Google Docs
+google-auth-oauthlib>=1.2.0         # export_gdoc.py — OAuth flow (needs credentials.json)
